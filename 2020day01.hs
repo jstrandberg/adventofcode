@@ -20,6 +20,5 @@ result2 s = "I don't know..."
 main :: IO ()
 main = do
     putStrLn "What to do..."
-    input <- readFile "input.txt"
     putStrLn $ result1 example
-    putStrLn $ result1 input
+    putStrLn $ result2 example
