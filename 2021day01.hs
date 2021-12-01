@@ -10,10 +10,8 @@ calc count (a:b:xs) =
         else calc count (b:xs)
 
 slide :: [Int] -> [Int]
-slide []         = []
-slide [_]        = []
-slide [_,_]      = []
 slide (a:b:c:xs) = [a + b + c] ++ slide (b:c:xs)
+slide catchall   = []
 
 parse :: String -> [Int]
 parse s = map read $ lines s
