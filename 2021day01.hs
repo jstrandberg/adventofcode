@@ -5,10 +5,9 @@ calc :: Int -> [Int] -> Int
 calc count []  = count
 calc count [_] = count
 calc count (a:b:xs) =
-    if b > a then
-        calc (count + 1) (b:xs)
-    else
-        calc count (b:xs)
+    if b > a
+        then calc (count + 1) (b:xs)
+        else calc count (b:xs)
 
 slide :: [Int] -> [Int]
 slide []         = []
