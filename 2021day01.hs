@@ -10,7 +10,14 @@ calc count (a:b:xs) =
     else
         calc count (b:xs)
 
+parse :: String -> [Int]
+parse s = map read $ lines s
+
 main :: IO ()
 main = do
     putStrLn "What to do..."
     putStrLn $ show $ calc 0 example
+    {-
+    file <- readFile "input.txt"
+    putStrLn $ show $ calc 0 $ parse file
+    -}
