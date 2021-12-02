@@ -12,8 +12,8 @@ example = [Forward 5
 
 calcCmd :: Cmd -> [Int]
 calcCmd (Forward n) = [n,0]
-calcCmd    (Down n) = [0,n]
-calcCmd      (Up n) = [0,-n]
+calcCmd (Down n)    = [0,n]
+calcCmd (Up n)      = [0,-n]
 
 calcCmds :: [Cmd] -> [Int]
 calcCmds cs = foldl (zipWith (+)) [0,0] $ map calcCmd cs
@@ -21,11 +21,23 @@ calcCmds cs = foldl (zipWith (+)) [0,0] $ map calcCmd cs
 result :: [Cmd] -> Int
 result cs = product $ calcCmds cs
 
+parseCmd :: [String] -> Cmd
+parseCmd [cmd,n] =
+    case cmd of
+        "forward" -> Forward $ read n
+        "down"    -> Down    $ read n
+        "up"      -> Up      $ read n
+        otherwise -> error "Error parsing command!"
+parseCmd _ = error "Error parsing command!"
+
+parse :: String -> [Cmd]
+parse s = map (parseCmd . words) $ lines s
+
 main :: IO ()
 main = do
     putStrLn "What to do..."
     putStrLn $ show $ result example
-    {- Todo: Parse input file to [Cmd]
+    {-
     file <- readFile "input.txt"
     putStrLn $ show $ result $ parse file
     -}
