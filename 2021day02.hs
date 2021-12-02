@@ -10,16 +10,29 @@ example = [Forward 5
           ,Forward 2
           ]
 
+-- [horizontal,depth]
 calcCmd :: Cmd -> [Int]
 calcCmd (Forward n) = [n,0]
 calcCmd (Down n)    = [0,n]
 calcCmd (Up n)      = [0,-n]
 
+-- [aim,horizontal,depth]
+calcCmd' :: [Int] -> Cmd -> [Int]
+calcCmd' [a,h,d] (Forward n) = [a,h+n,d+a*n]
+calcCmd' [a,h,d] (Down n)    = [a+n,h,d]
+calcCmd' [a,h,d] (Up n)      = [a-n,h,d]
+
 calcCmds :: [Cmd] -> [Int]
 calcCmds cs = foldl (zipWith (+)) [0,0] $ map calcCmd cs
 
+calcCmds' :: [Cmd] -> [Int]
+calcCmds' cs = foldl calcCmd' [0,0,0] cs
+
 result :: [Cmd] -> Int
 result cs = product $ calcCmds cs
+
+result' :: [Cmd] -> Int
+result' cs = product $ tail $ calcCmds' cs
 
 parseCmd :: [String] -> Cmd
 parseCmd [cmd,n] =
@@ -37,7 +50,9 @@ main :: IO ()
 main = do
     putStrLn "What to do..."
     putStrLn $ show $ result example
+    putStrLn $ show $ result' example
     {-
     file <- readFile "input.txt"
     putStrLn $ show $ result $ parse file
+    putStrLn $ show $ result' $ parse file
     -}
