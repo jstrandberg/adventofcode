@@ -28,3 +28,15 @@ epsilon x = map (\x -> if x == '0' then '1' else '0') $ gamma x
 -- stolen from iceman@stackoverflow
 binaryToInt :: String -> Int
 binaryToInt s = foldl (\a n -> a * 2 + (read [n])) 0 s
+
+result :: [String] -> Int
+result s = (binaryToInt $ gamma s) * (binaryToInt $ epsilon s)
+
+main :: IO ()
+main = do
+    putStrLn "What to do..."
+    putStrLn $ show $ result example
+    {-
+    file <- readFile "input.txt"
+    putStrLn $ show $ result $ lines file
+    -}
