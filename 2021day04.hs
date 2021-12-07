@@ -29,35 +29,67 @@ parseNumbers s = map read $ words [if c == ',' then ' ' else c | c <- (head s)]
 parseBoards :: [String] -> [[[Int]]]
 parseBoards s =
     let bs [] = []
-        bs (_:a:b:c:d:e:xs) = [a,b,c,d,e] : (transpose [a,b,c,d,e]) : bs xs
+        bs (_:a:b:c:d:e:xs) = [a,b,c,d,e] : bs xs
     in  bs $ map (map read . words) $ tail s
 
+-- -1 represent called numebers, flipping board to check columns
 hasBingo :: [[Int]] -> Bool
-hasBingo board = (length $ filter (==[]) board) > 0
+hasBingo board = let
+    board' = board ++ (transpose board)
+    in (length $ filter (all (==(-1))) board') > 0
 
-findHasBingo :: [[[Int]]] -> Maybe [[Int]]
-findHasBingo bs = find hasBingo bs
+-- how to not use the Maybe type
+findHasBingo :: [[[Int]]] -> [[Int]]
+findHasBingo bs = fromMaybe [[]] $ find hasBingo bs
 
+-- needed for multiple winners in part 2
+filterHasBingo :: [[[Int]]] -> [[[Int]]]
+filterHasBingo bs = let
+    bingo = fromMaybe [[]] $ find hasBingo bs
+    bs' = filter (/=bingo) bs
+    in if bingo /= [[]]
+        then filterHasBingo bs'
+        else bs'
+
+-- what a mess...-1 is crossed out number
 callNumber :: Int -> [[[Int]]] -> [[[Int]]]
-callNumber n bs = map (\b -> map (filter (/=n)) b) bs
+callNumber n bs = map (\b -> map (map (\x -> if x==n then (-1) else x)) b) bs
 
 -- just reaching for it...
 play :: [[[Int]]] -> [Int] -> Int
 play bs (n:ns) = let
     bs' = callNumber n bs
     winner = findHasBingo bs'
-    in if winner == Nothing
+    in if winner == [[]]
         then play bs' ns
-        else (*) n $ sum $ (fromMaybe [[]] winner) >>= (\x -> x)
+        else (*) n $ sum $ filter (/=(-1)) $ winner >>= (\x -> x)
+
+-- find last winner, everything should be refactored but time...
+-- bingo boards needs different type to hold numbers and track called numbers?
+-- maybe a type to represent the boards
+play' :: [[[Int]]] -> [Int] -> Int
+play' bs (n:ns) = let
+    bs' = callNumber n bs
+    winner = findHasBingo bs'
+    bs'' = filterHasBingo bs'
+    in if (length bs'' > 0)
+        then play' bs'' ns
+        else (*) n $ sum $ filter (/=(-1)) $ winner >>= (\x -> x)
+
 
 result :: [String] -> Int
 result s = play (parseBoards s) (parseNumbers s)
+
+result' :: [String] -> Int
+result' s = play' (parseBoards s) (parseNumbers s)
 
 main :: IO ()
 main = do
     putStrLn "What to do..."
     putStrLn $ show $ result example
+    putStrLn $ show $ result' example
     {-
     file <- readFile "input.txt"
     putStrLn $ show $ result $ lines file
+    putStrLn $ show $ result' $ lines file
     -}
