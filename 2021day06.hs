@@ -17,6 +17,11 @@ play xs i = let
 result :: [Int] -> Int
 result xs = length $ play xs 80
 
+-- part 2 idea?
+-- xs = sort $ zip example $ cycle [1]
+-- foldr (\ (y,b) ((x,a):xs) -> if x == y then ((x,a+b):xs) else ((y,b):(x,a):xs) ) [(0,0)] xs
+-- age > sort > fold > age > sort > ...
+
 parse :: String -> [Int]
 parse s = map read $ words [if c == ',' then ' ' else c | c <- s]
 
