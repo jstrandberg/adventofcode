@@ -1,26 +1,34 @@
 example :: [Int]
 example = [3,4,3,1,2]
 
-age :: Int -> [Int] -> [Int]
-age x a = let
-    x' = x - 1
-    in if x' < 0
-        then 6 : 8 : a
-        else x' : a
+data Population = Population Int Int Int Int Int Int Int Int Int
+    deriving Show
 
-play :: [Int] -> Int -> [Int]
-play xs 0 = xs
-play xs i = let
-    xs' = foldr age [] xs
-    in play xs' (i - 1)
+addFish :: Population -> Int -> Population
+addFish (Population a b c d e f g h i) n = case n of
+    0 -> Population (a + 1) b c d e f g h i
+    1 -> Population a (b + 1) c d e f g h i
+    2 -> Population a b (c + 1) d e f g h i
+    3 -> Population a b c (d + 1) e f g h i
+    4 -> Population a b c d (e + 1) f g h i
+    5 -> Population a b c d e (f + 1) g h i
+    6 -> Population a b c d e f (g + 1) h i
+    7 -> Population a b c d e f g (h + 1) i
+    8 -> Population a b c d e f g h (i + 1)
+    otherwise -> error "That's a strange fish"
 
-result :: [Int] -> Int
-result xs = length $ play xs 80
+seed :: [Int] -> Population
+seed x = foldl addFish (Population 0 0 0 0 0 0 0 0 0) x
 
--- part 2 idea?
--- xs = sort $ zip example $ cycle [1]
--- foldr (\ (y,b) ((x,a):xs) -> if x == y then ((x,a+b):xs) else ((y,b):(x,a):xs) ) [(0,0)] xs
--- age > sort > fold > age > sort > ...
+age :: Population -> Population
+age (Population a b c d e f g h i) = Population b c d e f g (a + h) i a
+
+-- finally an infinite list
+generations :: Population -> [Population]
+generations p = iterate age p
+
+result :: Population -> Int
+result (Population a b c d e f g h i) = a + b + c + d + e + f + g + h + i
 
 parse :: String -> [Int]
 parse s = map read $ words [if c == ',' then ' ' else c | c <- s]
@@ -28,8 +36,10 @@ parse s = map read $ words [if c == ',' then ' ' else c | c <- s]
 main :: IO ()
 main = do
     putStrLn "What to do..."
-    putStrLn $ show $ result example
+    putStrLn $ show $ result $ generations (seed example) !! 80
+    putStrLn $ show $ result $ generations (seed example) !! 256
     {-
     file <- readFile "input.txt"
-    putStrLn $ show $ result $ parse file
+    putStrLn $ show $ result $ generations (seed $ parse file) !! 80
+    putStrLn $ show $ result $ generations (seed $ parse file) !! 256
     -}
