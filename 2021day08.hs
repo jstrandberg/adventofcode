@@ -64,9 +64,9 @@ four :: [String] -> String
 four x = head $ filter ((==) 4 . length) x
 
 five :: [String] -> String
-five x = head $ filter diff4and7is1 length5
-    where length5        = filter ((==) 5 . length) x
-          diff4and7is1 s = diff (four x) s == 1 && diff (seven x) s == 1
+five x = head $ filter isNot2or3 length5
+    where length5     = filter ((==) 5 . length) x
+          isNot2or3 s = s /= two x && s /= three x
 
 six :: [String] -> String
 six x = head $ filter diff1is1 length6
