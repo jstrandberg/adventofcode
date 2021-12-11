@@ -14,6 +14,7 @@ example = ["be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe
 output :: String -> [String]
 output s = words . last . lines $ [if c == '|' then '\n' else c | c <- s]
 
+isUniqueNumOfSeg :: String -> Bool
 isUniqueNumOfSeg s
     | length s == 2 = True
     | length s == 3 = True
@@ -21,6 +22,7 @@ isUniqueNumOfSeg s
     | length s == 7 = True
     | otherwise     = False
 
+result :: [String] -> Int
 result x = length $ filter isUniqueNumOfSeg outputs
     where outputs = x >>= output
 
