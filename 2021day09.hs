@@ -48,7 +48,7 @@ result x = sum . map ((+) 1 . snd) . filter (fst) . map isLow' . allPositions $ 
           isLow' p = (isLow x p, height' p)
 
 parse :: String -> [[Int]]
-parse = undefined
+parse s = map (map (\x -> read [x])) . lines $ s
 
 main :: IO ()
 main = do
