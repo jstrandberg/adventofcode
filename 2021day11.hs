@@ -62,12 +62,16 @@ step s = step' (0, increase s)
         then (n+n',s'')
         else step' (n+n',s'')
 
-result :: [(Location,Int)] -> Int
-result s = fst (iterate result' (0,s) !! 100)
+iterations :: [(Location, Int)] -> [(Int, [(Location, Int)])]
+iterations s = iterate result' (0,s)
   where
-    result' (n,s') =
-      let (n',s'') = step s'
-      in (n+n',s'')
+    result' (n,s') = step s'
+
+result :: [(Location,Int)] -> Int
+result = sum . map fst . take 101 . iterations
+
+result' :: [(Location, Int)] -> Int
+result' = length . takeWhile (\x -> fst x /= 100) . iterations
 
 parse :: String -> [(Location,Int)]
 parse s = zip locations s'
@@ -78,7 +82,9 @@ main :: IO ()
 main = do
   putStrLn "What to do..."
   putStrLn . show . result $ example
+  putStrLn . show . result' $ example
   {-
   file <- readFile "input.txt"
   putStrLn . show . result . parse $ file
+  putStrLn . show . result' . parse $ file
   -}
