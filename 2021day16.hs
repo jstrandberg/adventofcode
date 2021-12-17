@@ -1,3 +1,5 @@
+import Control.Monad.State
+
 binaryFrom :: Char -> String
 binaryFrom c
   | c == '0' = "0000"
@@ -24,54 +26,81 @@ intFrom = foldl (\a n -> a * 2 + (read [n])) 0
 -- examples
 example1 = concat . map binaryFrom $ "D2FE28"
 example2 = concat . map binaryFrom $ "38006F45291200"
+example3 = concat . map binaryFrom $ "EE00D40C823060"
+example4 = concat . map binaryFrom $ "8A004A801A8002F478"
+example5 = concat . map binaryFrom $ "620080001611562C8802118E34"
+example6 = concat . map binaryFrom $ "C0015000016115A2E0802F182340"
+example7 = concat . map binaryFrom $ "A0016C880162017C3686B18A3D4780"
 
-data Packet =
-  Literal { version :: Int } |
-  Operator { l :: Length
-           , packets :: [Packet]
-           }
+data Header = Header { version :: Int, typeid :: Int }
   deriving Show
 
-data Length = Bits Int | Packets Int
+data Packet
+  = Literal Header Int
+  | Operator Header [Packet]
   deriving Show
 
-readPkt (Packets 0) _ = []
-readPkt (Bits 0) _ = []
-readPkt (Packets n) bs = case readTypeId bs of
-  4 ->
-    Literal { version = readLiteralLength bs } : readPkt (Packets (n-1)) (drop (readLiteralLength bs) bs)
-  otherwise ->
-    Operator { l = readSubLength bs
-             , packets = readPkt (readSubLength bs) $ dropHeader bs } : []
-readPkt (Bits n) bs = case readTypeId bs of
- 4 ->
-   Literal { version = readLiteralLength bs } : readPkt (Bits (n-(readLiteralLength bs))) (drop (readLiteralLength bs) bs)
- otherwise ->
-   Operator { l = readSubLength bs
-            , packets = readPkt (readSubLength bs) $ dropHeader bs } : []
+getInt :: Int -> State String Int
+getInt n = state (\s -> (intFrom . take n $ s, drop n s))
 
+getChunk :: Int -> State String String
+getChunk n = state (\s -> (take n s, drop n s))
 
+getLength :: State String Int
+getLength = state (\s -> (length s, s))
 
--- literal packages
-readLiteralLength = (+) 6 . (*) 5 . length . readLiteralChunks . dropHeader
-readLiteralInt = intFrom . concat . readLiteralChunks . dropHeader
-readLiteralChunks bs =
-  let (x:a:b:c:d:xs) = bs
-  in if x == '1'
-    then [a,b,c,d] : readLiteralChunks xs
-    else [a,b,c,d] : []
+readHeader :: State String Header
+readHeader = do
+  version' <- getInt 3
+  typeid'  <- getInt 3
+  return $ Header version' typeid'
 
--- headers
-readVersion = intFrom . take 3
-readTypeId = intFrom . take 3 . drop 3
-readLengthTypeId bs = read [head $ drop 6 bs]
-readSubLength bs = case readLengthTypeId bs of
-  0 -> Bits (intFrom . take 15 . tail . drop 6 $ bs)
-  1 -> Packets (intFrom . take 11 . tail . drop 6 $ bs)
-readHeaderLength bs =
-  if readTypeId bs == 4
-    then 6
-    else if readLengthTypeId bs == 0
-      then 6 + 1 + 15
-      else 6 + 1 + 11
-dropHeader bs = drop (readHeaderLength bs) bs
+readValue :: State String String
+readValue = do
+  flag  <- getInt 1
+  chunk <- getChunk 4
+  if flag == 0
+    then return chunk
+    else do
+      next <- readValue
+      return $ chunk ++ next
+
+readChunk :: State String [Packet]
+readChunk = do
+  packet  <- readPacket
+  clength <- getLength
+  if clength == 0
+    then return $ packet : []
+    else do
+      next <- readChunk
+      return $ packet : next
+
+readSubPackets :: State String [Packet]
+readSubPackets = do
+  flag <- getInt 1
+  if flag == 0
+    then do
+      clength <- getInt 15
+      chunk   <- getChunk clength
+      return $ evalState readChunk chunk
+    else do
+      num     <- getInt 11
+      packets <- readSubPackets' num
+      return packets
+  where
+    readSubPackets' 0 = return []
+    readSubPackets' n = do
+      packet <- readPacket
+      next   <- readSubPackets' (n - 1)
+      return $ packet : next
+
+readPacket :: State String Packet
+readPacket = do
+  header <- readHeader
+  if typeid header == 4
+    then do
+      value <- readValue
+      return $ Literal header $ intFrom value
+    else do
+      content <- readSubPackets
+      return $ Operator header content
