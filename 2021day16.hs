@@ -33,6 +33,15 @@ example5 = "620080001611562C8802118E34"
 example6 = "C0015000016115A2E0802F182340"
 example7 = "A0016C880162017C3686B18A3D4780"
 
+example8  = "C200B40A82"
+example9  = "04005AC33890"
+example10 = "880086C3E88112"
+example11 = "CE00C43D881120"
+example12 = "D8005AC2A8F0"
+example13 = "F600BC2D8F"
+example14 = "9C005AC2F8F0"
+example15 = "9C0141080250320F1802104A08"
+
 data Header = Header { version :: Int, typeid :: Int }
   deriving Show
 
@@ -115,11 +124,34 @@ pktVersion :: Packet -> Int
 pktVersion (Literal  header _) = version header
 pktVersion (Operator header _) = version header
 
+gt :: [Int] -> Int
+gt [a,b] = if a > b then 1 else 0
+
+lt :: [Int] -> Int
+lt [a,b] = if a < b then 1 else 0
+
+eq :: [Int] -> Int
+eq [a,b] = if a == b then 1 else 0
+
+runPkt :: Packet -> Int
+runPkt (Literal  _ v) = v
+runPkt (Operator h c) = case typeid h of
+  0 -> sum . map runPkt $ c
+  1 -> product . map runPkt $ c
+  2 -> minimum . map runPkt $ c
+  3 -> maximum . map runPkt $ c
+  5 -> gt . map runPkt $ c
+  6 -> lt . map runPkt $ c
+  7 -> eq . map runPkt $ c
+
 parse :: String -> String
 parse = concat . map binaryFrom
 
 result :: String -> Int
 result s = sum . mapPkt pktVersion $ [evalState readPacket s]
+
+result' :: String -> Int
+result' = runPkt . evalState readPacket
 
 main :: IO ()
 main = do
@@ -131,7 +163,16 @@ main = do
   putStrLn . show . result . parse $ example5
   putStrLn . show . result . parse $ example6
   putStrLn . show . result . parse $ example7
+  putStrLn . show . result' . parse $ example8
+  putStrLn . show . result' . parse $ example9
+  putStrLn . show . result' . parse $ example10
+  putStrLn . show . result' . parse $ example11
+  putStrLn . show . result' . parse $ example12
+  putStrLn . show . result' . parse $ example13
+  putStrLn . show . result' . parse $ example14
+  putStrLn . show . result' . parse $ example15
   {-
   file <- readFile "input.txt"
   putStrLn . show . result . parse $ file
+  putStrLn . show . result' . parse $ file
   -}
