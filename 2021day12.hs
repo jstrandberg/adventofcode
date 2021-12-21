@@ -1,5 +1,6 @@
 import Data.Char
 import Data.Tree
+import Data.List
 
 example1 :: [String]
 example1 =
@@ -60,6 +61,17 @@ parseCaves = foldl addCave []
 connectsTo :: String -> Caves -> [String]
 connectsTo c = map snd . filter ((==) c . fst)
 
+smallCaves :: Caves -> [String]
+smallCaves
+  = unique
+  . filter (\x -> x /= "start" && x /= "end")
+  . filter (all isLower)
+  . map fst
+  where
+    unique = foldl unique' [] . sort
+    unique' [] y = [y]
+    unique' (x:xs) y = if x == y then x:xs else y:x:xs
+
 buildTree :: String -> Caves -> [String] -> Tree String
 buildTree "end" _ _ = Node "end" []
 buildTree s cs vs = Node s $ map (\x -> buildTree x cs vs') subTrees
@@ -69,9 +81,29 @@ buildTree s cs vs = Node s $ map (\x -> buildTree x cs vs') subTrees
       then s : vs
       else vs
 
-result x = foldTree (\n ns -> if n == "end" then 1 else sum ns) tree
+buildTree' :: String -> String -> Caves -> [String] -> Tree String
+buildTree' "end" _ _ _ = Node "end" []
+buildTree' s sm cs vs = Node s $ map (\x -> buildTree' x sm' cs vs') subTrees
+  where
+    subTrees = filter (flip notElem vs) $ connectsTo s cs
+    sm' = if s == sm then "" else sm
+    vs' = if all isLower s && s /= sm
+      then s : vs
+      else vs
+
+endPaths = foldTree (\n ns -> if n == "end" then 1 else sum ns)
+
+result x = endPaths tree
   where
     tree = buildTree "start" (parseCaves x) []
+
+result' x = sum $ result x : smPaths
+  where
+    smPaths = map (\y -> y - result x) $ map endPaths forest
+    forest = map tree smallCaves'
+    caves = parseCaves x
+    smallCaves' = smallCaves caves
+    tree sm = buildTree' "start" sm caves []
 
 main :: IO ()
 main = do
@@ -79,7 +111,11 @@ main = do
   putStrLn . show . result $ example1
   putStrLn . show . result $ example2
   putStrLn . show . result $ example3
+  putStrLn . show . result' $ example1
+  putStrLn . show . result' $ example2
+  putStrLn . show . result' $ example3
   {-
   file <- readFile "input.txt"
   putStrLn . show . result . lines $ file
+  putStrLn . show . result' . lines $ file
   -}
