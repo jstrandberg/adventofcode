@@ -1,5 +1,14 @@
-example :: [String]
-example =
+import Prelude hiding (lookup)
+import Data.Maybe
+import Data.Map.Strict (Map)
+import qualified Data.Map.Strict as Map
+
+example :: Map Vector Int
+example
+  = Map.fromList
+  $ zip [(x,y) | y <- [0..9], x <- [0..9]]
+  $ map (read . pure)
+  $ concat
   ["1163751742"
   ,"1381373672"
   ,"2136511328"
@@ -12,31 +21,58 @@ example =
   ,"2311944581"
   ]
 
-type Location = (Int,Int)
+type Vector = (Int,Int)
 
-parse :: [String] -> [(Location,Int)]
-parse s
-  = zip [(x,y) | y <- [0..maxY s], x <- [0..maxX s]]
-  . map (read . pure)
-  $ concat s
+start  = (0,0)
+end    = (9,9)
+
+open :: Map Vector Vector
+open = Map.fromList $ map (,start) $ adj start
+closed :: Map Vector Vector
+closed = Map.singleton start start
+
+adj :: Vector -> [Vector]
+adj (x,y) = [(x,y-1), (x-1,y  ), (x+1,y  ), (x,y+1)]
+
+dist :: Vector -> Int
+dist (x,y) = (x - fst end)^2 + (y - snd end)^2
+
+cost :: Vector -> Int
+cost v = fromMaybe 999 $ Map.lookup v example
+
+costTotal :: Map Vector Vector -> Vector -> Int
+costTotal mv (0,0) = 0
+costTotal mv v = c + (costTotal mv $ (Map.!) mv v)
   where
-    maxX s = (length . head $ s) - 1
-    maxY s = (length s) - 1
+    c = cost v
 
-width :: [(Location,Int)] -> Int
-width = maximum . map fst . map fst
-
-height :: [(Location,Int)] -> Int
-height = maximum . map snd . map fst
-
-weight :: Location -> [(Location,Int)] -> Maybe Int
-weight l xs = lookup l xs
-
-heuristic :: Location -> Location -> Int
-heuristic (x1,y1) (x2,y2) = (x1 - x2)^2 + (y1 - y2)^2
-
-cost :: Int -> Location -> [(Location,Int)] -> Maybe Int
-cost s l xs = fmap (+) weight' <*> pure heuristic'
+insertMaybe parent o c v = if costTotal c parent' < costTotal c parent
+  then Map.insert v parent' o
+  else Map.insert v parent o
   where
-    weight' = fmap ((+) s) $ weight l xs
-    heuristic' = heuristic l (width xs,height xs)
+    parent' = fromMaybe parent $ Map.lookup v o
+    --m = Map.union o c
+
+-- insertMaybe parent o v = Map.insert v parent' o
+--   where parent' = fromMaybe parent $ Map.lookup v o
+
+next
+  = fst
+  $ Map.foldlWithKey (\a v c -> if snd a > c then (v,c) else a) (end,maxBound)
+  $ Map.mapWithKey (\v _ -> cost v + dist v)
+  $ open
+
+step o c
+  | Map.member end c = (o,c)
+  | Map.member (0,2) c =(o,c)
+  | otherwise = step o'' c'
+  where
+    current
+      = fst
+      $ Map.foldlWithKey (\a v c -> if snd a > c then (v,c) else a) (end,maxBound)
+      $ Map.mapWithKey (\v _ -> cost v + dist v)
+      $ o
+    o' = Map.delete current o
+    c' = let Just p = Map.lookup current o in Map.insert current p c
+    adj' = adj current
+    o'' = foldl (\a x -> insertMaybe current a c' x) o' adj'
