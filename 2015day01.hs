@@ -11,18 +11,22 @@ examples =
     ,(")())())",-3)
     ]
 
-what_floor :: String -> Int
-what_floor s =
-    let
-        count_up s = length $ filter (=='(') s
-        count_down s = length $ filter (==')') s
-    in
-        (count_up s) - (count_down s)
+parse :: Int -> Char -> Int
+parse n '(' = n + 1
+parse n ')' = n - 1
+parse n _   = n
+
+calc :: [Char] -> Int
+calc = foldl parse 0
+
+calc' :: [Char] -> Int
+calc' = fst . head . filter ((>) 0 . snd) . zip [0..] . scanl parse 0
 
 main :: IO ()
 main = do
     putStrLn "What to do..."
     {-
     file <- readFile "input.txt"
-    putStrLn $ show $ what_floor file
+    putStrLn $ show $ calc file
+    putStrLn $ show $ calc' file
     -}
