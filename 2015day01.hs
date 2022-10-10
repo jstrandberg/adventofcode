@@ -22,3 +22,7 @@ what_floor s =
 main :: IO ()
 main = do
     putStrLn "What to do..."
+    {-
+    file <- readFile "input.txt"
+    putStrLn $ show $ what_floor file
+    -}
