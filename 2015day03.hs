@@ -19,11 +19,21 @@ order (x1,y1) (x2,y2)
   | y1 > y2 = GT
   | otherwise = EQ
 
+calc :: String -> Int
+calc = length . group . sortBy order . scanl move (0,0)
+
+calc' :: String -> Int
+calc' s = let
+  santa = scanl move (0,0) $ map snd $ filter (even . fst) $ zip [0..] s
+  robot = scanl move (0,0) $ map snd $ filter (odd  . fst) $ zip [0..] s
+  in length $ group $ sortBy order $ concat [santa,robot]
 main :: IO ()
 main = do
   putStrLn "What to do..."
-  putStrLn $ show $ length $ group $ sortBy order $ scanl move (0,0) example
+  putStrLn $ show $ calc example
+  putStrLn $ show $ calc' example
   {-
   file <- readFile "input.txt"
-  putStrLn $ show $ length $ group $ sortBy order $ scanl move (0,0) file
+  putStrLn $ show $ calc file
+  putStrLn $ show $ calc' file
   -}
