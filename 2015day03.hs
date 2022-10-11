@@ -27,6 +27,7 @@ calc' s = let
   santa = scanl move (0,0) $ map snd $ filter (even . fst) $ zip [0..] s
   robot = scanl move (0,0) $ map snd $ filter (odd  . fst) $ zip [0..] s
   in length $ group $ sortBy order $ concat [santa,robot]
+
 main :: IO ()
 main = do
   putStrLn "What to do..."
