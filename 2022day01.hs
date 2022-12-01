@@ -12,7 +12,7 @@ parse = foldr fn [[]] . lines
         else (read a : b) : bs
 
 calc :: [[Int]] -> Int
-calc = head . reverse . sort . map sum
+calc = maximum . map sum
 
 main :: IO ()
 main = do
