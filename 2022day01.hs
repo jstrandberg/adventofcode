@@ -14,11 +14,16 @@ parse = foldr fn [[]] . lines
 calc :: [[Int]] -> Int
 calc = maximum . map sum
 
+calc' :: [[Int]] -> Int
+calc' = sum . take 3 . reverse . sort . map sum
+
 main :: IO ()
 main = do
   putStrLn "What to do..."
   putStrLn $ show $ calc $ parse example
+  putStrLn $ show $ calc' $ parse example
   {-
   file <- readFile "input.txt"
   putStrLn $ show $ calc $ parse file
+  putStrLn $ show $ calc' $ parse file
   -}
